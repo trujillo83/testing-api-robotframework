@@ -36,7 +36,7 @@ Verify JSON Response with Custom Logic
     # Validate userId is within the range 1-10
     ${userId}=       Get From Dictionary   ${response.json()}   userId
     ${is_valid_id}=  Is User Id Valid   ${userId}   1   10
-    Should Be True   ${is_valid_id}   msg=Invalid userId: ${userId}
+    Should Be Not True   ${is_valid_id}   msg=Invalid userId: ${userId}
 
     # Validate title length is within the range 5-100 characters
     ${title}=        Get From Dictionary   ${response.json()}   title
