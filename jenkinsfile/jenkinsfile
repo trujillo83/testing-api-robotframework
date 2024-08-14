@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+
+    parameters {
+	    string(name: 'BRANCH', defaultValue: 'main', description: 'Specify branch to run tests')
+	}
+
+    environment {
+        // Set environment variables, if any
+        PATH = "C:\\windows\\system32"
+        PYTHONPATH = "C:\\Python311\\python.exe"
+        ROBOT_REPORTS_DIR = "results"
+        BRANCH = "${params.BRANCH}"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: '${BRANCH}', url: 'https://github.com/trujillo83/testing-api-robotframework.git'
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                script {
+                    // Check directory
+                    bat "dir"
+                    bat "${PYTHONPATH} --version"
+
+                    // Create a virtual environment and activate it (Windows-specific)
+                    bat "${PYTHONPATH} -m venv env"
+                    bat "env\\Scripts\\activate"
+
+                    // Upgrade pip and install dependencies
+                    bat "env\\Scripts\\python -m pip install --upgrade pip"
+                    bat "env\\Scripts\\python -m pip install -r requirements.txt"
+                }
+            }
+        }
+
+        stage('Run Robot Framework Tests') {
+            steps {
+                script {
+                    bat "env\\Scripts\\python -m robot -d ${ROBOT_REPORTS_DIR} --nostatusrc api-testing.robot"
+                }
+            }
+        }
+
+        stage('Publish Results') {
+            steps {
+                // Publish Robot Framework results in Jenkins
+                robot outputPath: '${ROBOT_REPORTS_DIR}'
+            }
+        }
+    }
+
+    post {
+        always {
+            step([$class: 'RobotPublisher',
+                outputPath: '${ROBOT_REPORTS_DIR}',
+                outputFileName      : "output.xml",
+                reportFileName      : 'report.html',
+                logFileName         : 'log.html',
+                disableArchiveOutput: false,
+                passThreshold       : 100.0,
+                unstableThreshold   : 50.0,
+                otherFiles          : "**/*.png",
+                ])
+        }
+        success {
+            echo 'Build was successful!'
+        }
+        failure {
+            echo 'Build failed. Check the logs and Robot Framework reports for details'
+        }
+        unstable{
+            echo "Unstable. Check the logs and Robot Framework reports for details"
+        }
+    }
+
+}
