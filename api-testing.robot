@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation     Test Suite for robot framework test cases with customized keywords in python. Verify requests to
 ...               an open API, and check returned responses. This code was created with AI support
-Resource    resources/keywords.resource
+Resource          resources/keywords.resource
 Suite Setup       Create Session Setup
 
 *** Variables ***
